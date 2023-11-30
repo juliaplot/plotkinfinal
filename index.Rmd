@@ -1,0 +1,451 @@
+---
+title: "Plotkin Carbonate Methods Rmd"
+output: html_document
+date: "2023-11-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+#mac
+setwd("~/Library/CloudStorage/OneDrive-UniversityoftheVirginIslands/Grimes Lab/Thesis Data/Data Analysis")
+
+#load libs
+library(tidyverse)
+library(ggplot2)
+
+mthd <- read.csv("methodsdata_final.csv", header = TRUE)
+head(mthd)
+
+mthd$type <- as.factor(mthd$type)
+levels(mthd$type)
+
+levels(mthd$type)[levels(mthd$type) == 'B'] <- "Basin"
+levels(mthd$type)[levels(mthd$type) == 'F'] <- "Fringe"
+levels(mthd$type)[levels(mthd$type) == 'S'] <- "Salt Pond"
+
+summary(mthd$oc.acid)
+View(mthd)
+
+noic <- mthd %>%
+  filter(ic.dc == 0.00)
+noic
+
+iconly <- mthd %>%
+  filter(ic.dc > 0.00)
+
+View(iconly)
+
+View(iconly)
+View(mthd)
+
+mthd <- mthd %>% 
+  mutate(difference = oc.acid - oc.dc)
+
+summary(mthd$difference)
+
+summary(mthd %>% 
+          filter(ic.dc > 0.00))
+
+hist(mthd$difference)
+shapiro.test(mthd$difference)
+
+print(wilcox.test(mthd$oc.acid, mthd$oc.dc, paired = TRUE))
+wilcox.test(mthd$oc.acid, mthd$oc.dc, paired = TRUE)
+t.test(mthd$oc.acid, mthd$oc.dc, paired = TRUE)
+
+###graph paired data
+paireddata <- mthd %>%
+  select(oc.acid, oc.dc, n)
+paireddata
+pairedmelt <- melt(paireddata, id = "n", 
+                   variable.name = "method", 
+                   value.name = "oc")
+pairedmelt <- paireddata %>%
+  rename()
+
+levels(pairedmelt$method)[levels(pairedmelt$method) == 'oc.acid'] <- "Acid Fumigation"
+levels(pairedmelt$method)[levels(pairedmelt$method) == 'oc.dc'] <- "Double Combustion"
+levels(mthd$type)[levels(mthd$type) == 'S'] <- "Salt Pond"
+
+
+
+ggplot(pairedmelt, aes(x=method, y=oc, group=n)) +
+  geom_point(size = 2) +
+  geom_line(size=1, alpha=0.5) +
+  xlab('Method') +
+  ylab('Organic Carbon Estimation (%)')+
+  theme_bw()+
+  scale_y_continuous(limits = c(0, 40), breaks = c( 10, 20, 30, 40))+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())+
+  theme(axis.text.x = element_text(size=12, color="black"))+
+  theme(axis.text.y = element_text(size=12, color="black"))+
+  theme(axis.title=element_text(size=12,face="bold"))
+
+  scale_colour_manual(values=c("#009E73", "#D55E00"), guide=FALSE) + 
+  theme_bw()
+
+
+View(mthd)
+
+mthdwilcox <- mthd %>%
+  filter(difference != 0.00)
+
+View(mthdwilcox)
+wilcox.test(mthdwilcox$oc.acid, mthdwilcox$oc.dc, paired = TRUE)
+
+## graph differences compared to inorganic carbon content
+## is the difference when the carbon itself is small? or is it when the percent of carbon that is inorganic is big? is when the OM is small or big??
+
+#plot
+
+ggplot()
+
+
+
+?hist
+
+#create scatter plot comparing organic carbon results between dbl comb. and acid fum., color by type
+
+mthd <- mthd %>%
+  group_by(type)
+
+mthd.plot <- ggplot(mthd, aes(x= oc.dc, y=oc.acid))+
+  geom_point(stat = "identity", size = 4, aes(color = type))+
+  scale_color_manual(values = c("orange", "deepskyblue", "green"))+
+  theme_bw()+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())+
+  theme(axis.text.x = element_text(size=16, color="black"))+
+  theme(axis.text.y = element_text(size=16, color="black"))+
+  theme(axis.title=element_text(size=17,face="bold"))+
+  xlab("% Organic Carbon by Double Combustion")+
+  ylab("% Organic Carbon by Acid Fumigation")
+  #ggtitle("Organic Carbon Determined by Double Combustion v. Acid Fumigation")
+
+mthd.plot
+
+#compare percent difference between 0% inorganic carbon and > 0% inorganic carbon
+#paired t test
+
+#test for normality 
+shapiro.test(icnz$diff.abs)
+#Shapiro-Wilk normality test
+
+#data:  icnz$diff.abs
+#W = 0.88416, p-value = 0.01452
+
+shapiro.test(icz$diff.abs)
+#Shapiro-Wilk normality test
+
+#data:  icz$diff.abs
+#W = 0.73087, p-value = 6.851e-05
+
+#select data columns, rename
+mthdt <- mthd %>%
+  select(site, type, ic.dc.pct, diff.abs) %>%
+  rename(ic = ic.dc.pct) %>%
+  rename(diff = diff.abs) %>%
+  mutate(diffsqrt = sqrt(diff)) %>%
+  mutate(if.ic = ic > 0, 
+         if.ic = if_else(if.ic == TRUE, "Appreciable Carbonate", "0% Carbonate"))
+
+View(mthdt)
+mthdt$if.ic <- as.factor(mthdt$if.ic)
+
+#plot
+ggplot(mthdt, aes(x = if.ic, y = diffsqrt))+
+  geom_boxplot()
+
+#t-test
+t.test(diffsqrt ~ if.ic, data = mthdt)
+
+#inorganic carbon equals 0
+icz <- mthd %>%
+  filter(mthd$ic.dc.pct == 0)
+
+#inorganic carbon is greater than 0
+icnz <- mthd %>%
+  filter(mthd$ic.dc.pct > 0)
+
+plot(mthd$ic.dc.pct, mthd$diff.abs)
+
+mthdlm <- lm(diff.abs ~ ic.dc.pct, mthd)
+summary(mthdlm)
+
+
+###Paired t test
+
+lets look at the data
+
+plot(oc.pair$oc.dc)
+
+hist(oc.pair$oc.acid, col="steelblue", main='Normal')
+hist(oc.pair$oc.acid.inv)
+hist(oc.pair$oc.dc.inv)
+
+shapiro.test(oc.pair$oc.acid) #not normal
+shapiro.test(oc.pair$oc.dc) #not normal
+
+#select data
+oc.pair <- mthd %>%
+  select(n, oc.dc, oc.acid) %>%
+  mutate(oc.acid.log = log10(oc.acid)) %>%
+  mutate(oc.acid.inv = 1/oc.acid) %>%
+  mutate(oc.dc.log = log10(oc.dc)) %>%
+  mutate(oc.dc.inv = 1/oc.dc)
+
+t.test(carbonate$oc.dc.sqrt, oc.pair$oc.acid.sqrt, paired = TRUE)
+
+wilcox.test(carbonate$oc.dc, carbonate$oc.acid, paired = TRUE)
+
+
+###just carbonate
+carbonate <- mthd %>%
+  filter(ic.dc.pct > 0) %>%
+  select(n, oc.dc, oc.acid) %>%
+  mutate(dcinv = 1/oc.dc) %>%
+  mutate(acidinv = 1/oc.acid)
+
+View(carbonate)
+
+hist(carbonate$oc.acid) #notnormal
+hist(carbonate$oc.dc) #notnormal
+
+shapiro.test(carbonate$oc.acid) #not normal
+shapiro.test(carbonate$oc.dc) #not normal
+
+shapiro.test(carbonate$dcinv) #normal
+shapiro.test(carbonate$acidinv) #notnormal
+
+ic <- mthd %>%
+  filter(ic.dc > 0)
+
+noic <- mthd %>%
+  filter(ic.dc == 0)
+
+t.test(mthd$oc.acid, mthd$oc.dc, paired = TRUE)
+
+hist(ic$difference)
+shapiro.test(ic$difference) # normal
+
+hist(noic$difference)
+shapiro.test(noic$difference) # not normal
+
+wilcox.test(noic$difference, ic$difference, var = FALSE)
+
+# Sample data frames
+df1 <- data.frame(id = 1:5, variable1 = c(10, 20, 30, 40, 50))
+df2 <- data.frame(id = 3:7, variable2 = c(60, 70, 80, 90, 100))
+
+# Combine data frames by the "id" column
+comb_diff <- merge(ic, noic, by = "difference", all = FALSE)
+comb_diff <- comb_diff %>%
+  select()
+
+mthd_group <- mthd %>%
+  select(ic.dc, difference)
+
+mthd_group$icgroup <- ifelse(mthd_group$ic.dc > 0, "IC", "no IC")
+
+icmerged <- mthd_group %>%
+  select(icgroup, difference)
+icmerged
+m1<-wilcox.test(bugs ~ spray, data=dat, na.rm=TRUE, paired=FALSE, exact=FALSE, conf.int=TRUE)
+
+wilcox.test(difference ~ icgroup, data = icmerged, paired = FALSE, na.rm = TRUE, exact = FALSE, conf.int = TRUE)
+### Differences Between Methods
+
+
+
+
+
+#### IC GROUPED 
+icmerged$icgroup <- as.factor(icmerged$icgroup)
+icmerged$icgroup <- relevel(icmerged$icgroup, ref = "no IC")
+
+ggplot(icmerged, aes(x = icgroup, y = difference))+
+  geom_boxplot()+
+  scale_x_discrete(labels = c("No Inorganic Carbon", "Contains Inorganic Carbon"))+
+  xlab("")+
+  ylab("Differences in Estimations (%)")+
+  ggtitle("Differences in Organic Carbon Estimations by Inorganic Carbon Content")+
+  scale_y_continuous(limits = c(-2, 7), breaks = c(-2, 0, 2, 4, 6, 8))+
+  theme_bw()+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())+
+  theme(axis.text.x = element_text(size=12, color="black"))+
+  theme(axis.text.y = element_text(size=12, color="black"))+
+  theme(axis.title=element_text(size=12))
+  
+
+ # scale_fill_manual(values = c("darkgreen", "lightgreen"))
+
+ic <- mthd_group %>%
+  filter(ic.dc > 0)
+noic <- mthd_group %>%
+  filter(ic.dc == 0)
+ic
+icgroup <- merge(ic, noic, by = "difference")
+
+mthd_group
+
+View(comb_diff)
+# Print the combined data frame
+print(combined_df)
+
+wilcox.test(difference ~ icgroup, data = icmerged, var.equal = FALSE, paired = FALSE)
+
+wilcox.test(ic$difference, noic$difference, paired = FALSE)
+t.test(ic$difference, noic$difference, var.equal = FALSE)
+
+installinorganic carbon with % difference
+
+
+
+##### two sample t test with and without IC content
+
+
+
+#bland altman plot?
+
+##from BMFL...####
+### Bland Altman style plots
+chn$c.avg<-(bmfl.c+cola.c)/2
+chn$c.dif<-(bmfl.c-cola.c)
+mean(mthd$difference)
+
+### BA Style Plot - WORKING ###
+ggplot(mthd, aes(x = ic.dc, y = difference)) +
+  geom_point(data = mthd[which(mthd$ic.dc > 0.00),], aes(color = "> 0% IC"), size = 3.5) +
+  geom_point(data = mthd[which(mthd$ic.dc == 0.00),], aes(color = "= 0% IC"), size = 3.5) +
+  geom_hline(yintercept = mean(mthd$difference), colour = "blue", size = 1) +
+  geom_hline(yintercept = mean(mthd$difference) - sd(mthd$difference), colour = "red", size = 1) +
+  geom_hline(yintercept = mean(mthd$difference) + sd(mthd$difference), colour = "red", size = 1) +
+  scale_color_manual(values = c("> 0% IC" = "black", "= 0% IC" = "#808080"),
+                     labels = c("> 0% IC" = "> 0% IC", "= 0% IC" = "= 0% IC")) +
+  labs(x = "ic.dc", y = "difference", color = "") +
+  ylab("Difference in Estimations (%)")+
+  xlab("Percent Inorganic Carbon (%)")+
+  theme_bw()+
+  scale_x_continuous(limits = c(0,12), breaks = c(2,4,6,8,10))+
+  scale_y_continuous(limits = c(-3, 7), breaks = c(-2, 0, 2, 4, 6, 8))+
+  ggtitle("Difference in Organic Carbon Estimations between Acid Fumigation and Double Combustion")+
+  annotate("text", label = "+ 1 SD", x = 11.5, y = 3.4, size = 5)+
+  annotate("text", x = 11.4, y = 1.4, label = "Mean (1.2%)", size = 5)+
+  annotate("text", x = 11.5, y = -0.6, label = " - 1 SD", size = 5)+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())+
+  theme(axis.text.x = element_text(size=12, color="black"))+
+  theme(axis.text.y = element_text(size=12, color="black"))+
+  theme(axis.title=element_text(size=12,face="bold"))
+
+#########################################################
+ggplot(mthd, aes(x = ic.dc, y = difference)) +
+  geom_point(data = mthd[which(mthd$ic.dc > 0.00),], color = "black", size=3.5) +
+  geom_point(data = mthd[which(mthd$ic.dc == 0.00),], color = "#808080", size = 3.5) +
+  geom_hline(yintercept = mean(mthd$difference), colour = "blue", size = 1) +
+  geom_hline(yintercept = mean(mthd$difference) - sd(mthd$difference), colour = "red", size = 1) +
+  geom_hline(yintercept = mean(mthd$difference) + sd(mthd$difference), colour = "red", size = 1) +
+  ylab("Difference in Estimations (%)")+
+  xlab("Percent Inorganic Carbon (%)")+
+  theme_bw()+
+  scale_x_continuous(limits = c(0,12), breaks = c(2,4,6,8,10))+
+  scale_y_continuous(limits = c(-3, 7), breaks = c(-2, 0, 2, 4, 6, 8))+
+  ggtitle("Difference in Organic Carbon Estimations between Acid Fumigation and Double Combustion")+
+  annotate("text", label = "+ 1 SD", x = 11.5, y = 3.4, size = 5)+
+  annotate("text", x = 11.6, y = 1.4, label = "Mean (1.2%)", size = 5)+
+  annotate("text", x = 11.5, y = -0.6, label = " - 1 SD", size = 5)+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())+
+  theme(axis.text.x = element_text(size=12, color="black"))+
+  theme(axis.text.y = element_text(size=12, color="black"))+
+  theme(axis.title=element_text(size=12,face="bold"))
+
+library(ggplot2)
+
+# Sample data
+data <- data.frame(x = 1:10, y = 1:10, group = c("Group A", "Group B"))
+
+# Create a scatter plot with a legend at the bottom and a custom legend title
+ggplot(data, aes(x, y, color = group)) +
+  geom_point() +
+  labs(x = "X-axis", y = "Y-axis") +
+  theme(legend.position = "bottom", legend.justification = "center") +
+  guides(color = guide_legend(title = "Custom Legend Title")) +
+  theme_minimal()
+
+
+### Triplicates plots
+
+ggplot(trip,aes(x=core,y=Carbon))+
+  geom_point(size=3.5, shape=21, fill="indianred3")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90))+
+  theme(axis.text.x = element_text(size=16, color="black"))+
+  theme(axis.text.y = element_text(size=16, color="black"))+
+  theme(axis.title=element_text(size=17,face="bold"))+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())+
+  theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        axis.title.x = element_text(margin= margin(t = 15, r = 0, ), l = 0))+
+  ylab("%C - BMFL")+
+  xlab("Core")
+
+ggsave('BMFL_C_trip.tiff',units = 'in', dpi = 320, width= 10, height = 8, device = 'tiff')
+
+ggplot(trip,aes(x=core,y=Nitrogen))+
+  geom_point(size=3.5, shape=21, fill="turquoise")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90))+
+  theme(axis.text.x = element_text(size=16, color="black"))+
+  theme(axis.text.y = element_text(size=16, color="black"))+
+  theme(axis.title=element_text(size=17,face="bold"))+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())+
+  theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        axis.title.x = element_text(margin= margin(t = 15, r = 0, ), l = 0))+
+  ylab("%N - BMFL")+
+  xlab("Core")
+
+ggsave('BMFL_N_trip.tiff',units = 'in', dpi = 320, width= 10, height = 8, device = 'tiff')
+
+
+
+
